@@ -1,0 +1,7 @@
+requests
+pygubu
+pyqt5
+setuptools 45.0.0
+wheel
+mysql-connector-python
+mysqlclient
