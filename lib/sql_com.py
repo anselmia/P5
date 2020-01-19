@@ -35,7 +35,7 @@ class SQL():
                                                     auth_plugin='mysql_native_password',
                                                     charset = 'utf8')
 
-            self.cursor = self.conn.cursor()
+            self.cursor = self.conn.cursor(prepared=True)
 
         except Error as e:
             print("Error while connecting to MySQL", e)
@@ -66,14 +66,14 @@ class SQL():
             self.cursor.execute("CREATE DATABASE " + db_name)
 
         except Error as e:
-            print("Error while creating database", e)
+            log.appendText("Error while creating database " + table_name + str(e), (255,30,30))
 
-    def insert(self, table_name, **args):
+    def insert(self, log, table_name, **args):
         try:
             self.connect()
 
             columns = args.keys()
-            values = args.values()
+            values = tuple(args.values())
 
             query = "INSERT IGNORE INTO " + table_name + " ("
 
@@ -82,30 +82,25 @@ class SQL():
             query = query[:-1]
             query += ")"
             query += " VALUES " + "("
-
             for value in values:
-                is_string = isinstance(value, str)
-                if is_string:
-                   query += "'"
-                #query += MySQLdb.escape_string(value)
-                query += value
-                if is_string:
-                   query +="'"
-                query += ","
+                query += "%s,"
             query = query[:-1]
+            
             query += ")"
 
             self.cursor.execute(query.encode(sys.stdout.encoding), values)
-            #self.cursor.execute(query, values)
             self.conn.commit()
+            id_inserted = self.cursor.lastrowid
 
         except Error as e:
-            print("Error while inserting data in table " + table_name, e)     
+            log.appendText("Error while inserting data in table " + table_name + str(e), (255,30,30)) 
    
         finally:
             self.disconnect()
     
-    def select(self, table_name):
+        return id_inserted
+    
+    def select(self, log, table_name):
         rows = None
 
         try:
@@ -114,10 +109,59 @@ class SQL():
             rows = self.cursor.fetchall()
 
         except Error as e:
-            print("Error while retrieving database rows from table " + table_name, e) 
+            log.appendText("Error while retrieving database rows from table " + table_name + str(e), (255,30,30))
 
         finally:
             self.disconnect()
 
         return rows
 
+    def select_one_attribute_where(self, log, table_name, attribute, condition):
+        rows = None
+
+        try:
+            self.connect()
+            query = f"SELECT {attribute} FROM {table_name} WHERE {condition[0]} = %s"
+            query_condition = (condition[1],)
+            self.cursor.execute(query, query_condition)
+            rows = self.cursor.fetchall()
+
+        except Error as e:
+            log.appendText("Error while retrieving database rows from table " + table_name + str(e), (255,30,30))
+
+        finally:
+            self.disconnect()
+
+        return rows
+
+    def select_where(self, log, table_name, condition):
+        rows = None
+
+        try:
+            self.connect()
+            query = f"SELECT * FROM {table_name} WHERE {condition[0]} = %s"
+            query_condition = (condition[1],)
+            self.cursor.execute(query, query_condition)
+            rows = self.cursor.fetchall()
+
+        except Error as e:
+            log.appendText("Error while retrieving database rows from table " + table_name + str(e), (255,30,30))
+
+        finally:
+            self.disconnect()
+
+        return rows
+    
+    def execute_query(self, log, query, values):
+        try:
+            self.connect()
+            self.cursor.execute(query, values)
+            rows = self.cursor.fetchall()
+
+        except Error as e:
+            log.appendText("Error while executing query " + query + str(e), (255,30,30))
+
+        finally:
+            self.disconnect()
+
+        return rows
