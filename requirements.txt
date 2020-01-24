@@ -1,5 +1,4 @@
 requests
 pyqt5
-setuptools
 wheel
 mysql-connector-python

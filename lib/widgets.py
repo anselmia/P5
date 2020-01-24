@@ -1,10 +1,12 @@
 from PyQt5.QtWidgets import QDialog, QApplication, QTableWidgetItem, QHeaderView
+from models.text import Message
 
-
-def add_items_to_combobox(combobox, items):
+def add_items_attribute_to_combobox_from_list_object(combobox, list_objects, attribute_name):
+    attributes = [getattr(attribute, attribute_name) for attribute in list_objects]       
+                
     combobox.clear()
     combobox.blockSignals(True)
-    combobox.addItems(items)
+    combobox.addItems(attributes)
     combobox.blockSignals(False)
 
 def set_tab_column_mode(tab, modes):

@@ -37,8 +37,8 @@ class SQL():
 
             self.cursor = self.conn.cursor(prepared=True)
 
-        except Error as e:
-            print("Error while connecting to MySQL", e)
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
     def disconnect(self):
         try:
@@ -47,7 +47,7 @@ class SQL():
                 self.conn.close()
 
         except Error as e:
-            print("Error while disconnecting to MySQL", e)
+            Message.mysql_error(log, e)
 
     def create_db(self, db_name):
         try:
@@ -57,16 +57,16 @@ class SQL():
 
             self.cursor.execute("CREATE DATABASE " + db_name)
 
-        except Error as e:
-            print("Error while creating database", e)
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
     def create_table(self, table_name,**args):
         try:
             self.connect()
             self.cursor.execute("CREATE DATABASE " + db_name)
 
-        except Error as e:
-            log.appendText("Error while creating database " + table_name + str(e), (255,30,30))
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
     def insert(self, log, table_name, **args):
         try:
@@ -92,8 +92,8 @@ class SQL():
             self.conn.commit()
             id_inserted = self.cursor.lastrowid
 
-        except Error as e:
-            log.appendText("Error while inserting data in table " + table_name + str(e), (255,30,30)) 
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
    
         finally:
             self.disconnect()
@@ -108,13 +108,13 @@ class SQL():
             self.cursor.execute("SELECT * FROM " + table_name)
             rows = self.cursor.fetchall()
 
-        except Error as e:
-            log.appendText("Error while retrieving database rows from table " + table_name + str(e), (255,30,30))
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
         finally:
             self.disconnect()
 
-        return rows
+        return [tuple(self.to_unicode(col) for col in row) for row in rows]
 
     def select_one_attribute_where(self, log, table_name, attribute, condition):
         rows = None
@@ -126,8 +126,8 @@ class SQL():
             self.cursor.execute(query, query_condition)
             rows = self.cursor.fetchall()
 
-        except Error as e:
-            log.appendText("Error while retrieving database rows from table " + table_name + str(e), (255,30,30))
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
         finally:
             self.disconnect()
@@ -144,8 +144,8 @@ class SQL():
             self.cursor.execute(query, query_condition)
             rows = self.cursor.fetchall()
 
-        except Error as e:
-            log.appendText("Error while retrieving database rows from table " + table_name + str(e), (255,30,30))
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
         finally:
             self.disconnect()
@@ -158,10 +158,15 @@ class SQL():
             self.cursor.execute(query, values)
             rows = self.cursor.fetchall()
 
-        except Error as e:
-            log.appendText("Error while executing query " + query + str(e), (255,30,30))
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            Message.mysql_error(log, e)
 
         finally:
             self.disconnect()
 
         return rows
+
+    def to_unicode(self, col):
+            if isinstance(col, bytearray):
+                return col.decode('utf-8')
+            return col
