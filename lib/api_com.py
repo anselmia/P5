@@ -73,20 +73,6 @@ class OpenFoodFactsApi:
             # list are irrelevant here.
             data_products = json_data_file.get("products")
 
-            test2 = []
-            for product in data_products:
-                test = {
-                    key: product[key]
-                    for key in product.keys() & {i: None for i in filtered_tags}
-                    if all(item in list(product.keys()) for item in filtered_tags)
-                }
-                for k, v in test.items():
-                    if test[k] == None:
-                        ahah = True
-                if len(test) != 5:
-                    ahah = True
-                test2.append(test)
-
             products = [
                 {key: product[key] for key in product.keys() & {i: None for i in filtered_tags}}
                 for product in data_products
