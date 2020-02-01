@@ -4,19 +4,21 @@ import mysql.connector
 import MySQLdb
 from mysql.connector import Error
 
-from models.text import Message
 import settings as CST
+from models.text import Message
 
 
 class SQL:
-
     def __init__(self, log):
         self.cursor = None
         self.conn = None
         self.log = log
 
         if not self.database_exist():
-            self.executeScriptsFromFile("create_database.sql")
+            sql_commands = self.replace_database_name_in_script(
+                self.read_sql_scrypt("create_database.sql")
+            )
+            self.execute_sql_scrypts(sql_commands)
 
     def connect_to_database(self):
         try:
@@ -169,7 +171,7 @@ class SQL:
             return col.decode("utf-8")
         return col
 
-    def executeScriptsFromFile(self, sql_file_path):
+    def read_sql_scrypt(self, sql_file_path):
         # Open and read the file as a single buffer
         with open(sql_file_path, "r", encoding="utf-8") as f:
             data = f.read().splitlines()
@@ -184,7 +186,9 @@ class SQL:
                     sql_commands.append(stmt.strip())
                     stmt = ""
 
-        sql_commands = self.replace_database_name_in_script(sql_commands)
+        return sql_commands
+
+    def execute_sql_scrypts(self, sql_commands):
         self.connect_to_server()
         # Execute every command from the input file
         for num, command in enumerate(sql_commands):
@@ -214,8 +218,7 @@ class SQL:
 
     def replace_database_name_in_script(self, sql_commands):
         sql_commands = [
-            command.replace("databaseName", CST.DATABASE_NAME)
-            for command in sql_commands
+            command.replace("databaseName", CST.DATABASE_NAME) for command in sql_commands
         ]
 
         return sql_commands

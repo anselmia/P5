@@ -1,4 +1,5 @@
 import requests
+
 from models.text import Message
 
 
@@ -12,9 +13,8 @@ class OpenFoodFactsApi:
         category_names = []
         try:
             # Recover data from Open Food Facts URL API with request get.
-            response = requests.get(
-                "https://fr.openfoodfacts.org/categories.json", timeout=3
-            )
+            response = requests.get("https://fr.openfoodfacts.org/categories.json", timeout=3)
+            # raise an exception if the request was unsuccessful
             response.raise_for_status()
             # Save the json data in a variable.
             json_data_file = response.json()
@@ -50,7 +50,7 @@ class OpenFoodFactsApi:
         #                f'''https://fr.openfoodfacts.org/categorie/{category}.json'''
         # )
         products = []
-        payload = {
+        filters = {
             "action": "process",
             "tagtype_0": "categories",  # which subject is selected (categories)
             "tag_contains_0": "contains",  # contains or not
@@ -63,9 +63,7 @@ class OpenFoodFactsApi:
         }
 
         try:
-            response = requests.get(
-                "https://fr.openfoodfacts.org/cgi/search.pl", params=payload
-            )
+            response = requests.get("https://fr.openfoodfacts.org/cgi/search.pl", params=filters)
 
             # Recover data from Open Food Facts URL API with request get.
             # response = requests.get(url_categories)
@@ -75,11 +73,22 @@ class OpenFoodFactsApi:
             # list are irrelevant here.
             data_products = json_data_file.get("products")
 
-            products = [
-                {
+            test2 = []
+            for product in data_products:
+                test = {
                     key: product[key]
                     for key in product.keys() & {i: None for i in filtered_tags}
+                    if all(item in list(product.keys()) for item in filtered_tags)
                 }
+                for k, v in test.items():
+                    if test[k] == None:
+                        ahah = True
+                if len(test) != 5:
+                    ahah = True
+                test2.append(test)
+
+            products = [
+                {key: product[key] for key in product.keys() & {i: None for i in filtered_tags}}
                 for product in data_products
                 if all(item in list(product.keys()) for item in filtered_tags)
             ]

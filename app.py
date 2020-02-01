@@ -1,11 +1,13 @@
 # coding: utf-8
 
 import sys
+
+from PyQt5.QtWidgets import QApplication, QDialog
+
 import lib.widgets as widgets
 import settings as CST
-from PyQt5.QtWidgets import QApplication, QDialog
+from form.main import *
 from lib.sql_com import SQL
-from main import *
 from models.category import Category as Cat
 from models.favorite import Favorite
 from models.log import Log
@@ -31,9 +33,7 @@ class MainWindow(QDialog):
 
     def add_favorite_to_combobox(self):
         favorites_name = [str(favorite) for favorite in self.favorite_substitutes[0:50]]
-        widgets.add_list_items_to_combobox(
-            self.ui.cb_favorite_substitute, favorites_name
-        )
+        widgets.add_list_items_to_combobox(self.ui.cb_favorite_substitute, favorites_name)
 
     def manage_widgets(self):
         self.ui.cb_source.addItems(["API", "DataBase"])
@@ -47,19 +47,13 @@ class MainWindow(QDialog):
         self.ui.bt_next_product.clicked.connect(self.next_product)
         self.ui.bt_last_substitute.clicked.connect(self.last_substitute)
         self.ui.bt_next_substitute.clicked.connect(self.next_substitute)
-        self.ui.bt_last_favorite_substitute.clicked.connect(
-            self.last_favorite_substitute
-        )
-        self.ui.bt_next_favorite_substitute.clicked.connect(
-            self.next_favorite_substitute
-        )
+        self.ui.bt_last_favorite_substitute.clicked.connect(self.last_favorite_substitute)
+        self.ui.bt_next_favorite_substitute.clicked.connect(self.next_favorite_substitute)
 
         self.ui.cb_source.activated[str].connect(self.select_source)
         self.ui.cb_category.activated[str].connect(self.select_category)
         self.ui.cb_substitute.activated[str].connect(self.select_substitute)
-        self.ui.cb_favorite_substitute.activated[str].connect(
-            self.select_favorite_substitute
-        )
+        self.ui.cb_favorite_substitute.activated[str].connect(self.select_favorite_substitute)
         self.ui.cb_product.activated[str].connect(self.select_product)
 
         modes = ["ResizeToContents", "Stretch"]
@@ -83,8 +77,7 @@ class MainWindow(QDialog):
             widgets.empty_table_column(self.ui.tab_product, 1)
             widgets.empty_table_column(self.ui.tab_substitute, 1)
             categories_name = [
-                str(category)
-                for category in self.categories[: CST.NB_OF_CATEGORY_TO_SHOW]
+                str(category) for category in self.categories[: CST.NB_OF_CATEGORY_TO_SHOW]
             ]
             widgets.add_list_items_to_combobox(self.ui.cb_category, categories_name)
             Message.select(self.log, "category")
@@ -104,8 +97,7 @@ class MainWindow(QDialog):
                 widgets.empty_table_column(self.ui.tab_product, 1)
                 widgets.empty_table_column(self.ui.tab_substitute, 1)
                 products_name = [
-                    str(product)
-                    for product in self.products[: CST.NB_OF_PRODUCT_TO_SHOW]
+                    str(product) for product in self.products[: CST.NB_OF_PRODUCT_TO_SHOW]
                 ]
                 widgets.add_list_items_to_combobox(
                     self.ui.cb_product, products_name,
@@ -129,9 +121,7 @@ class MainWindow(QDialog):
                     str(substitute)
                     for substitute in self.substitutes[: CST.NB_OF_SUBSTITUTE_TO_SHOW]
                 ]
-                widgets.add_list_items_to_combobox(
-                    self.ui.cb_substitute, substitutes_name
-                )
+                widgets.add_list_items_to_combobox(self.ui.cb_substitute, substitutes_name)
                 Message.select(self.log, "substitute")
 
     def select_substitute(self, text):
@@ -148,21 +138,34 @@ class MainWindow(QDialog):
             product, substitute = favorite_substitute.get_favorite(self.sql, self.log)
 
             if product is not None and substitute is not None:
-                self.ui.cb_source.findText("DataBase")
-                widgets.populate_tab(self.ui.tab_product, product, Prod.attributes)
-                widgets.populate_tab(
-                    self.ui.tab_substitute, substitute, Prod.attributes
-                )
+                index_source_in_combo = self.ui.cb_source.findText("DataBase")
+                self.ui.cb_source.setCurrentIndex(index_source_in_combo)
+                QtGui.QGuiApplication.processEvents()
+                self.select_source(self.ui.cb_source.currentText())
+                category_name = self.sql.select_one_attribute_where(
+                    "category", "name", ("id", product.id_category)
+                )[0][0]
+                index_category_in_combo = self.ui.cb_category.findText(category_name)
+                self.ui.cb_category.setCurrentIndex(index_category_in_combo)
+                QtGui.QGuiApplication.processEvents()
+                self.select_category()
+                QtGui.QGuiApplication.processEvents()
+                index_product_in_combo = self.ui.cb_product.findText(product.name)
+                self.ui.cb_product.setCurrentIndex(index_product_in_combo)
+                QtGui.QGuiApplication.processEvents()
+                self.select_product(product.name)
+                QtGui.QGuiApplication.processEvents()
+                index_substitute_in_combo = self.ui.cb_substitute.findText(substitute.name)
+                self.ui.cb_substitute.setCurrentIndex(index_substitute_in_combo)
+                QtGui.QGuiApplication.processEvents()
+                self.select_substitute(substitute.name)
+                QtGui.QGuiApplication.processEvents()
 
     def save_substitute(self):
         if len(self.substitutes) > 0 and self.ui.cb_substitute.currentText() != "":
 
             product = next(
-                (
-                    prod
-                    for prod in self.products
-                    if prod.name == self.ui.cb_product.currentText()
-                ),
+                (prod for prod in self.products if prod.name == self.ui.cb_product.currentText()),
                 None,
             )
             substitute = next(
@@ -174,11 +177,7 @@ class MainWindow(QDialog):
                 None,
             )
             favorite = Favorite.add_favorite_substitute(
-                self.sql,
-                self.log,
-                self.ui.cb_category.currentText(),
-                product,
-                substitute,
+                self.sql, self.log, self.ui.cb_category.currentText(), product, substitute,
             )
 
             if favorite is not None:
@@ -190,19 +189,13 @@ class MainWindow(QDialog):
                         : CST.NB_OF_FAVORITE_SUBSTITUTE_TO_SHOW
                     ]
                 ]
-                widgets.add_list_items_to_combobox(
-                    self.ui.cb_favorite_substitute, favorites_name
-                )
+                widgets.add_list_items_to_combobox(self.ui.cb_favorite_substitute, favorites_name)
 
     def next_category(self, text):
         if self.ui.cb_category.count() > 0:
             last_item = self.ui.cb_category.itemText(self.ui.cb_category.count() - 1)
             index_in_list = next(
-                (
-                    index
-                    for index, item in enumerate(self.categories)
-                    if item.name == last_item
-                ),
+                (index for index, item in enumerate(self.categories) if item.name == last_item),
                 -1,
             )
 
@@ -226,11 +219,7 @@ class MainWindow(QDialog):
         if self.ui.cb_category.count() > 0:
             first_item = self.ui.cb_category.itemText(0)
             index_in_list = next(
-                (
-                    index
-                    for index, item in enumerate(self.categories)
-                    if item.name == first_item
-                ),
+                (index for index, item in enumerate(self.categories) if item.name == first_item),
                 -1,
             )
 
@@ -249,12 +238,7 @@ class MainWindow(QDialog):
         if self.ui.cb_product.count() > 0:
             last_item = self.ui.cb_product.itemText(self.ui.cb_product.count() - 1)
             index_in_list = next(
-                (
-                    index
-                    for index, item in enumerate(self.products)
-                    if item.name == last_item
-                ),
-                -1,
+                (index for index, item in enumerate(self.products) if item.name == last_item), -1,
             )
 
             if (
@@ -267,21 +251,14 @@ class MainWindow(QDialog):
                 self.ui.cb_substitute.clear()
                 widgets.empty_table_column(self.ui.tab_product, 1)
                 widgets.empty_table_column(self.ui.tab_substitute, 1)
-                products_name = [
-                    str(product) for product in self.products[range[0] : range[1]]
-                ]
+                products_name = [str(product) for product in self.products[range[0] : range[1]]]
                 widgets.add_list_items_to_combobox(self.ui.cb_product, products_name)
 
     def last_product(self):
         if self.ui.cb_product.count() > 0:
             first_item = self.ui.cb_product.itemText(0)
             index_in_list = next(
-                (
-                    index
-                    for index, item in enumerate(self.products)
-                    if item.name == first_item
-                ),
-                -1,
+                (index for index, item in enumerate(self.products) if item.name == first_item), -1,
             )
 
             if index_in_list > 0:
@@ -289,9 +266,7 @@ class MainWindow(QDialog):
                 self.ui.cb_substitute.clear()
                 widgets.empty_table_column(self.ui.tab_product, 1)
                 widgets.empty_table_column(self.ui.tab_substitute, 1)
-                products_name = [
-                    str(product) for product in self.products[range[0] : range[1]]
-                ]
+                products_name = [str(product) for product in self.products[range[0] : range[1]]]
                 widgets.add_list_items_to_combobox(self.ui.cb_product, products_name)
 
     def next_substitute(self):
@@ -299,15 +274,9 @@ class MainWindow(QDialog):
             self.ui.cb_category.count() > 0
             and self.ui.cb_category.count() == CST.NB_OF_CATEGORY_TO_SHOW
         ):
-            last_item = self.ui.cb_substitute.itemText(
-                self.ui.cb_substitute.count() - 1
-            )
+            last_item = self.ui.cb_substitute.itemText(self.ui.cb_substitute.count() - 1)
             index_in_list = next(
-                (
-                    index
-                    for index, item in enumerate(self.substitutes)
-                    if item.name == last_item
-                ),
+                (index for index, item in enumerate(self.substitutes) if item.name == last_item),
                 -1,
             )
 
@@ -317,22 +286,15 @@ class MainWindow(QDialog):
                 )
                 widgets.empty_table_column(self.ui.tab_substitute, 1)
                 substitutes_name = [
-                    str(substitute)
-                    for substitute in self.substitutes[range[0] : range[1]]
+                    str(substitute) for substitute in self.substitutes[range[0] : range[1]]
                 ]
-                widgets.add_list_items_to_combobox(
-                    self.ui.cb_substitute, substitutes_name
-                )
+                widgets.add_list_items_to_combobox(self.ui.cb_substitute, substitutes_name)
 
     def last_substitute(self):
         if self.ui.cb_substitute.count() > 0:
             first_item = self.ui.cb_substitute.itemText(0)
             index_in_list = next(
-                (
-                    index
-                    for index, item in enumerate(self.substitutes)
-                    if item.name == first_item
-                ),
+                (index for index, item in enumerate(self.substitutes) if item.name == first_item),
                 -1,
             )
 
@@ -340,12 +302,9 @@ class MainWindow(QDialog):
                 range = self.get_last_range(index_in_list, CST.NB_OF_SUBSTITUTE_TO_SHOW)
                 widgets.empty_table_column(self.ui.tab_substitute, 1)
                 substitutes_name = [
-                    str(substitute)
-                    for substitute in self.substitutes[range[0] : range[1]]
+                    str(substitute) for substitute in self.substitutes[range[0] : range[1]]
                 ]
-                widgets.add_list_items_to_combobox(
-                    self.ui.cb_substitute, substitutes_name
-                )
+                widgets.add_list_items_to_combobox(self.ui.cb_substitute, substitutes_name)
 
     def next_favorite_substitute(self):
         if self.ui.cb_product.count() > 0:
@@ -360,12 +319,9 @@ class MainWindow(QDialog):
                     CST.NB_OF_FAVORITE_SUBSTITUTE_TO_SHOW,
                 )
                 favorites_name = [
-                    str(favorite)
-                    for favorite in self.favorite_substitutes[range[0] : range[1]]
+                    str(favorite) for favorite in self.favorite_substitutes[range[0] : range[1]]
                 ]
-                widgets.add_list_items_to_combobox(
-                    self.ui.cb_favorite_substitute, favorites_name
-                )
+                widgets.add_list_items_to_combobox(self.ui.cb_favorite_substitute, favorites_name)
 
     def last_favorite_substitute(self):
         if self.ui.cb_category.count() > 0:
@@ -373,16 +329,11 @@ class MainWindow(QDialog):
             index_in_list = self.categories.index(first_item)
 
             if index_in_list > 0:
-                range = self.get_last_range(
-                    index_in_list, CST.NB_OF_FAVORITE_SUBSTITUTE_TO_SHOW
-                )
+                range = self.get_last_range(index_in_list, CST.NB_OF_FAVORITE_SUBSTITUTE_TO_SHOW)
                 favorites_name = [
-                    str(favorite)
-                    for favorite in self.favorite_substitutes[range[0] : range[1]]
+                    str(favorite) for favorite in self.favorite_substitutes[range[0] : range[1]]
                 ]
-                widgets.add_list_items_to_combobox(
-                    self.ui.cb_favorite_substitute, favorites_name
-                )
+                widgets.add_list_items_to_combobox(self.ui.cb_favorite_substitute, favorites_name)
 
     def get_last_range(self, index_in_list, item_to_show):
         range = tuple()

@@ -29,16 +29,7 @@ class Product:
     }
 
     def __init__(
-        self,
-        name,
-        id_category,
-        brands,
-        url,
-        nutrition_grade,
-        fat,
-        saturated_fat,
-        sugar,
-        salt,
+        self, name, id_category, brands, url, nutrition_grade, fat, saturated_fat, sugar, salt,
     ):
         self.name = name
         self.id_category = id_category
@@ -81,16 +72,14 @@ class Product:
         if len(category_from_db) == 0:
             return []
         else:
-            id_category = category_from_db[0][0]
             select_query = f"SELECT * FROM product WHERE id_category = %s\
             AND (nutrition_grade = %s OR nutrition_grade = %s)\
             AND (name <> %s)"
-            values = (id_category, "a", "b", self.name)
+            values = (self.id_category, "a", "b", self.name)
             substitutes_from_db = sql.execute_query(select_query, values)
 
             substitutes = [
-                Product.get_obj_from_db_result(substitute)
-                for substitute in substitutes_from_db
+                Product.get_obj_from_db_result(substitute) for substitute in substitutes_from_db
             ]
 
         if len(substitutes) > 0:
@@ -145,11 +134,7 @@ class Product:
 
         products = []
         for product in api_products:
-            fat = (
-                product["nutriscore_data"]["fat"]
-                if "fat" in product["nutriscore_data"]
-                else 0
-            )
+            fat = product["nutriscore_data"]["fat"] if "fat" in product["nutriscore_data"] else 0
             saturated_fat = (
                 product["nutriscore_data"]["saturated_fat"]
                 if "saturated_fat" in product["nutriscore_data"]
@@ -161,9 +146,7 @@ class Product:
                 else 0
             )
             salt = (
-                product["nutriscore_data"]["salt"]
-                if "salt" in product["nutriscore_data"]
-                else 0
+                product["nutriscore_data"]["salt"] if "salt" in product["nutriscore_data"] else 0
             )
 
             prod = Product(
@@ -191,9 +174,7 @@ class Product:
         """ Method that retrieves products from database. """
         Message.loading(log, "product", "Database")
 
-        category_from_db = sql.select_one_attribute_where(
-            "category", "id", ("name", category)
-        )
+        category_from_db = sql.select_one_attribute_where("category", "id", ("name", category))
         id_category = category_from_db[0][Product.from_db_to_obj["id"]]
         database_products = sql.select_where("product", ("id_category", id_category))
 
