@@ -1,5 +1,4 @@
 import requests
-
 from models.text import Message
 
 
@@ -13,7 +12,9 @@ class OpenFoodFactsApi:
         category_names = []
         try:
             # Recover data from Open Food Facts URL API with request get.
-            response = requests.get("https://fr.openfoodfacts.org/categories.json", timeout=3)
+            response = requests.get(
+                "https://fr.openfoodfacts.org/categories.json", timeout=3
+            )
             response.raise_for_status()
             # Save the json data in a variable.
             json_data_file = response.json()
@@ -25,14 +26,14 @@ class OpenFoodFactsApi:
                 if (":" not in category.get("name") and len(category.get("name")) > 1)
             ]
 
-        except requests.exceptions.HTTPError as errh:
-            Message.http_error(log, errh)
-        except requests.exceptions.ConnectionError as errc:
-            Message.connexion_error(log, errc)
-        except requests.exceptions.Timeout as errt:
-            Message.timeout(log, errt)
-        except requests.exceptions.RequestException as err:
-            Message.other_api_exception(log, err)
+        except requests.exceptions.HTTPError:
+            Message.http_error(log)
+        except requests.exceptions.ConnectionError:
+            Message.connexion_error(log)
+        except requests.exceptions.Timeout:
+            Message.timeout(log)
+        except requests.exceptions.RequestException:
+            Message.other_api_exception(log)
 
         finally:
             return category_names
@@ -62,7 +63,9 @@ class OpenFoodFactsApi:
         }
 
         try:
-            response = requests.get("https://fr.openfoodfacts.org/cgi/search.pl", params=payload)
+            response = requests.get(
+                "https://fr.openfoodfacts.org/cgi/search.pl", params=payload
+            )
 
             # Recover data from Open Food Facts URL API with request get.
             # response = requests.get(url_categories)
@@ -73,19 +76,22 @@ class OpenFoodFactsApi:
             data_products = json_data_file.get("products")
 
             products = [
-                {key: product[key] for key in product.keys() & {i: None for i in filtered_tags}}
+                {
+                    key: product[key]
+                    for key in product.keys() & {i: None for i in filtered_tags}
+                }
                 for product in data_products
                 if all(item in list(product.keys()) for item in filtered_tags)
             ]
 
-        except requests.exceptions.HTTPError as errh:
-            Message.http_error(log, errh)
-        except requests.exceptions.ConnectionError as errc:
-            Message.connexion_error(log, errc)
-        except requests.exceptions.Timeout as errt:
-            Message.timeout(log, errt)
-        except requests.exceptions.RequestException as err:
-            Message.other_api_exception(log, err)
+        except requests.exceptions.HTTPError:
+            Message.http_error(log)
+        except requests.exceptions.ConnectionError:
+            Message.connexion_error(log)
+        except requests.exceptions.Timeout:
+            Message.timeout(log)
+        except requests.exceptions.RequestException:
+            Message.other_api_exception(log)
 
         finally:
             return products

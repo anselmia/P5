@@ -3,21 +3,27 @@ from models.text import Message
 
 
 class Category:
+
+    from_db_to_obj = {"id": 0, "name": 1}
+
     def __init__(self, name):
         self.name = name
 
     def __str__(self):
-        return "category"
+        return self.name
+
+    def save_in_db(self, SQL, log):
+        return SQL.insert("category", **self.__dict__)
 
     @staticmethod
     def select_from_db(SQL, log):
         """ Method that retrieves categories from database. """
         Message.loading(log, "category", "DataBase")
-        database_categories = SQL.select(log, "category")
+        database_categories = SQL.select("category")
 
         categories = []
         for category in database_categories:
-            cat = Category(category[1])
+            cat = Category(category[Category.from_db_to_obj["name"]])
             categories.append(cat)
 
         if len(categories) > 0:
@@ -44,7 +50,3 @@ class Category:
             Message.impossible_to_load(log, "categories")
 
         return categories
-
-    def save_in_db(self, SQL, log):
-        category_dic = {"name": self.name}
-        return SQL.insert(log, "category", **category_dic)

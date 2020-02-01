@@ -8,7 +8,9 @@ class Log(QPlainTextEdit):
     def __init__(self, text_edit):
         super().__init__()
         self.text_edit = text_edit
-        self.text_edit.setStyleSheet(f"background-color: rgb({CST.PLAIN_TEXT_BACKGROUND_COLOR});")
+        self.text_edit.setStyleSheet(
+            f"background-color: rgb({CST.PLAIN_TEXT_BACKGROUND_COLOR});"
+        )
 
     def appendText(self, text, color=(0, 255, 0)):
         color = QColor(*color)

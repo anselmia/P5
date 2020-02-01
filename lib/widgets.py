@@ -1,12 +1,10 @@
-from PyQt5.QtWidgets import QDialog, QHeaderView, QTableWidgetItem
+from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem
 
 
-def add_items_attribute_to_combobox_from_list_object(combobox, list_objects, attribute_name):
-    attributes = [getattr(attribute, attribute_name) for attribute in list_objects]
-
+def add_list_items_to_combobox(combobox, list_items):
     combobox.clear()
     combobox.blockSignals(True)
-    combobox.addItems(attributes)
+    combobox.addItems(list_items)
     combobox.blockSignals(False)
 
 
@@ -29,3 +27,9 @@ def populate_tab(tab, obj, attributes):
         # Add following line to only populate first column
         item = QTableWidgetItem(str(getattr(obj, attributes[row])))
         tab.setItem(row, 1, item)
+
+
+def empty_table_column(tab, column_num):
+    for row in range(tab.rowCount()):
+        item = QTableWidgetItem("")
+        tab.setItem(row, column_num, item)
